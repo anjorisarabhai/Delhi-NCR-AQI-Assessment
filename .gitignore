@@ -1,0 +1,12 @@
+# Virtual environment
+venv/
+
+# Data files (CSV, etc.) - Don't upload large data to Git
+*.csv
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# VS Code settings
+.vscode/
