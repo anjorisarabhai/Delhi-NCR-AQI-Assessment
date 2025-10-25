@@ -1,0 +1,36 @@
+# Core Data Science & GEE Packages
+earthengine-api
+pandas
+numpy
+matplotlib
+seaborn
+
+# Essential Dependencies
+cachetools
+certifi
+charset-normalizer
+google-api-core
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-cloud-core
+google-cloud-storage
+google-crc32c
+google-resumable-media
+googleapis-common-protos
+httplib2
+idna
+packaging
+proto-plus
+protobuf
+pyasn1
+pyasn1-modules
+pyparsing
+python-dateutil
+pytz
+requests
+rsa
+six
+tzdata
+uritemplate
+urllib3
