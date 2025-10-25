@@ -118,7 +118,7 @@ def get_s5p_time_series(product_info, point, start_date, end_date):
             return []
             
 # 3. SETUP FOR RESUMING SCRIPT
-output_filename = 'S5P_AQI_Data_Delhi_NCR_2020_Present_NRTI.csv' # Using NRTI file
+output_filename = 'data/raw/S5P_AQI_Data_Delhi_NCR_2020_Present_NRTI.csv' # Using NRTI file
 resume_point = None
 processed_locations = []
 file_exists = os.path.exists(output_filename)
