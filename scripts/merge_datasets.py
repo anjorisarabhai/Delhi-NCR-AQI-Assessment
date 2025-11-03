@@ -37,29 +37,35 @@ def merge_data():
     # --- 3. Harmonize CPCB Location Names (CRUCIAL STEP) ---
     print("Harmonizing CPCB location names...")
     
-    # This map is based on the screenshots you provided
+    # This map is based on all debug outputs and screenshots
     location_map = {
-        'Anand Vihar, Delhi - DPCC': 'Anand Vihar, Delhi',
-        'Mandir Marg Delhi - DPCC': 'Mandir Marg, Delhi',
-        'Punjabi Bagh Delhi - DPCC': 'Punjabi Bagh, Delhi',
-        'R K Puram Delhi - DPCC': 'RK Puram, Delhi',
-        'Sector - 125 Noida - UPPCB': 'Sector 125, Noida',
-        'Sector-51 Gurugram - HSPCB': 'Sector 51, Gurugram',
-        'Vikas Sadan Gurugram - HSPCB': 'Vikas Sadan, Gurugram',
+        # KEY = Messy CPCB Name (from CPCB_Ground_Daily_Filled.csv)
+        # VALUE = Clean S5P Name (from S5P_NRTI_Filled.csv)
         
-        # --- Add the 'Sector 62' variant here ---
-        # Check your CPCB_Ground_Daily_Filled.csv for the exact name.
-        # It's probably one of these (uncomment the correct one):
-        # 'Sector - 62 Noida - UPPCB': 'Sector 62, Noida',
-        # 'Sector-62, Noida - UPPCB': 'Sector 62, Noida',
-        # 'Sector 62, Noida - UPPCB': 'Sector 62, Noida',
+        'Anand Vihar, Delhi - DPCC': 'Anand Vihar, Delhi',
+        
+        # Names with double spaces after the main location
+        'Punjabi Bagh  Delhi - DPCC': 'Punjabi Bagh, Delhi',
+        'Mandir Marg  Delhi - DPCC': 'Mandir Marg, Delhi',
+        'Vikas Sadan  Gurugram - HSPCB': 'Vikas Sadan, Gurugram',
+        'Sector-51  Gurugram - HSPCB': 'Sector 51, Gurugram',
+        'Sector - 125  Noida - UPPCB': 'Sector 125, Noida',
+        'R K Puram  Delhi - DPCC': 'RK Puram, Delhi',
+        
+        # The Sector 62 name (with one space)
+        'Sector - 62 Noida - IMD': 'Sector 62, Noida'
     }
 
     # Clean junk rows (e.g., if the header 'Location' was included as a row)
-    cpcb_df = cpcb_df[cpcb_df['location'].str.strip() != 'Location'].copy()
+    # Convert all to string and strip whitespace before checking
+    cpcb_df['location'] = cpcb_df['location'].astype(str).str.strip()
+    cpcb_df = cpcb_df[cpcb_df['location'] != 'Location'].copy()
+    cpcb_df.dropna(subset=['location'], inplace=True) # Drop any rows with blank locations
 
     # Apply the mapping
-    cpcb_df['location'] = cpcb_df['location'].str.strip().map(location_map).fillna(cpcb_df['location'])
+    # .map(location_map) will apply the map
+    # .fillna(cpcb_df['location']) will keep any name that *wasn't* in the map (e.g., if one was already clean)
+    cpcb_df['location'] = cpcb_df['location'].map(location_map).fillna(cpcb_df['location'])
 
     print("--- Post-Harmonization CPCB Locations ---")
     print(sorted(cpcb_df['location'].unique()))
@@ -75,6 +81,9 @@ def merge_data():
     except Exception as e:
         print(f"Error loading satellite data: {e}")
         sys.exit(1)
+        
+    print("--- S5P Locations ---")
+    print(sorted(s5p_df['location'].unique()))
 
     # --- 5. Rename Satellite Columns ---
     print("Renaming satellite columns...")
@@ -110,7 +119,10 @@ def merge_data():
         
         print("\n--- Check for Missing Ground Data (Post-Merge) ---")
         # This will show if any S5P locations failed to match
-        print(master_df[master_df['location'].isin(s5p_df['location'].unique())]['PM2.5_ground'].isnull().mean() * 100, "% of merged rows are missing ground data")
+        check_locations = s5p_df['location'].unique()
+        merged_check = master_df[master_df['location'].isin(check_locations)]
+        missing_pct = merged_check['PM2.5_ground'].isnull().mean() * 100
+        print(f"{missing_pct:.2f}% of satellite data rows are missing matching ground data.")
         
     except Exception as e:
         print(f"\nERROR: Failed to save master dataset. {e}")
