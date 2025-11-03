@@ -10,18 +10,16 @@ print("--- Starting CPCB Data Preprocessing ---")
 try:
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    # *** UPDATED FILENAME to match image ***
-    raw_cpcb_path = project_root / 'data' / 'raw' / 'COMBINED-GROUND DATA.xlsx' 
+    raw_cpcb_path = project_root / 'data' / 'raw' / 'COMBINED_GROUND_DATA.csv' 
     processed_cpcb_path = project_root / 'data' / 'processed' / 'CPCB_Ground_Daily_Filled.csv'
 except NameError:
     project_root = Path.cwd()
-    raw_cpcb_path = project_root / 'data' / 'raw' / 'Delhi_NCR_Ground_Data.xlsx'
+    raw_cpcb_path = project_root / 'data' / 'raw' / 'COMBINED_GROUND_DATA.csv'
     processed_cpcb_path = project_root / 'data' / 'processed' / 'CPCB_Ground_Daily_Filled.csv'
     print("Warning: Running interactively. Assuming current directory is project root.")
 
-# *** UPDATED: Sheet Name and Rows to Skip ***
-sheet_to_read = 'Sheet1' # <-- Data is on Sheet1
-rows_to_skip = 1         # <-- Skip the first row (with 'Column1', 'Column2', etc.)
+# *** UPDATED: Skip the 'Column1,Column2...' row ***
+rows_to_skip = 1 
 
 column_mapping = {
     'From Date': 'Datetime', 'PM2.5': 'PM2.5_ground', 'PM10': 'PM10_ground',
@@ -38,27 +36,20 @@ final_pollutant_cols = [
 ]
 
 # 1. Load Data
-print(f"Loading raw CPCB data from: {raw_cpcb_path} (Sheet: {sheet_to_read})")
+print(f"Loading raw CPCB data from: {raw_cpcb_path} (CSV file)")
 if not raw_cpcb_path.is_file():
      print(f"ERROR: Raw CPCB file not found at '{raw_cpcb_path}'.")
      sys.exit(1)
 
 try:
-    # *** CORRECTED: sheet_name='Sheet1', header=0, skiprows=1 ***
-    df = pd.read_excel(raw_cpcb_path, sheet_name=sheet_to_read, header=0, skiprows=rows_to_skip)
-    print(f"Raw data loaded successfully from sheet '{sheet_to_read}', skipping first {rows_to_skip} row(s). Shape: {df.shape}")
+    # *** CORRECTED: header=0, skiprows=1 ***
+    df = pd.read_csv(raw_cpcb_path, header=0, skiprows=rows_to_skip) 
+    print(f"Raw data loaded successfully from CSV, skipping first {rows_to_skip} row(s). Shape: {df.shape}")
     if df.empty:
-        print(f"ERROR: Sheet '{sheet_to_read}' appears to be empty after skipping rows.")
+        print(f"ERROR: CSV file appears to be empty after skipping rows.")
         sys.exit(1)
-    print(f"Columns read from Excel: {df.columns.tolist()}")
+    print(f"Columns read from CSV: {df.columns.tolist()}")
 
-except ValueError as e:
-     if f"Worksheet named '{sheet_to_read}' not found" in str(e):
-          print(f"ERROR: Sheet named '{sheet_to_read}' not found in the Excel file.")
-          print("Please check the sheet name and update 'sheet_to_read'.")
-     else:
-          print(f"ERROR: Failed to load raw CPCB data. {e}")
-     sys.exit(1)
 except Exception as e:
     print(f"ERROR: Failed to load raw CPCB data. {e}")
     sys.exit(1)
@@ -67,8 +58,8 @@ except Exception as e:
 print("Renaming and selecting relevant columns...")
 missing_cols = [col for col in column_mapping.keys() if col not in df.columns]
 if missing_cols:
-    print(f"ERROR: The following required columns are missing from sheet '{sheet_to_read}' after skipping rows: {', '.join(missing_cols)}")
-    print(f"Columns found in sheet: {df.columns.tolist()}")
+    print(f"ERROR: The following required columns are missing from the CSV after skipping rows: {', '.join(missing_cols)}")
+    print(f"Columns found in file: {df.columns.tolist()}")
     print("Please check the 'column_mapping' dictionary and the 'rows_to_skip' value.")
     sys.exit(1)
 
