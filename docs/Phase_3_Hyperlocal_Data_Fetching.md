@@ -176,7 +176,7 @@ Analyzes building footprints and urban density.
 The pipeline processes each monitoring station sequentially:
 
 ```python
-buffer_radius_m = 100  # meters
+buffer_radius_m = 1000  # meters
 
 for each station:
     1. Create buffer polygon around station point
