@@ -57,18 +57,21 @@ def merge_hyperlocal_features():
     print("\nChecking for station name mismatches...")
     
     # Create a mapping for any name differences
-    # Based on the existing merge script pattern, we might need to handle variations
+    # Format: 'name_in_hyperlocal': 'name_in_master'
+    # These mappings handle inconsistencies in station naming between datasets
     station_map = {
-        # Add any name mappings here if needed
-        # Format: 'name_in_hyperlocal': 'name_in_master'
+        'R K Puram, Delhi': 'RK Puram, Delhi',  # Space difference: "R K" vs "RK"
+        'Sector 51 Gurugram': 'Sector 51, Gurugram',  # Missing comma: "Sector 51 Gurugram" vs "Sector 51, Gurugram"
+        'Vikas Sadan Gurugram': 'Vikas Sadan, Gurugram',  # Missing comma: "Vikas Sadan Gurugram" vs "Vikas Sadan, Gurugram"
     }
     
     # Apply mapping if any exists
     if station_map:
+        print(f"Applying {len(station_map)} station name mappings...")
         hyperlocal_df['station'] = hyperlocal_df['station'].map(station_map).fillna(hyperlocal_df['station'])
         print("Applied station name mappings.")
     
-    # Check for mismatches
+    # Check for mismatches AFTER applying mappings
     hyperlocal_stations = set(hyperlocal_df['station'].unique())
     master_locations = set(master_df['location'].unique())
     
@@ -76,17 +79,22 @@ def merge_hyperlocal_features():
     only_hyperlocal = hyperlocal_stations - master_locations
     only_master = master_locations - hyperlocal_stations
     
-    print(f"\nCommon stations: {len(common_stations)}")
+    print(f"\nCommon stations (after mapping): {len(common_stations)}")
     if common_stations:
         print(sorted(common_stations))
     
     if only_hyperlocal:
-        print(f"\nStations only in hyperlocal data ({len(only_hyperlocal)}):")
+        print(f"\n⚠️  WARNING: Stations only in hyperlocal data ({len(only_hyperlocal)}):")
         print(sorted(only_hyperlocal))
+        print("   These stations will not be merged with master data.")
     
     if only_master:
-        print(f"\nLocations only in master AQI data ({len(only_master)}):")
+        print(f"\n⚠️  WARNING: Locations only in master AQI data ({len(only_master)}):")
         print(sorted(only_master))
+        rows_affected = master_df[master_df['location'].isin(only_master)].groupby('location').size()
+        print("   Rows that will get NaN for hyperlocal features:")
+        for loc, count in rows_affected.items():
+            print(f"     '{loc}': {count} rows")
 
     # --- 5. Merge Data ---
     print("\nMerging hyperlocal features with master AQI data...")
